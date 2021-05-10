@@ -1,4 +1,4 @@
-import { add, map, zipWith, append } from "ramda";
+import { add, map, zipWith, append, indexOf } from "ramda";
 import { Value } from './L21-value-store';
 import { Result, makeFailure, makeOk, bind, either } from "../shared/result";
 import { SSL_OP_PKCS1_CHECK_1 } from "constants";
@@ -76,10 +76,12 @@ export const applyEnv = (env: Env, v: string): Result<number> =>
     applyExtEnv(env, v);
 
 const applyGlobalEnv = (env: GlobalEnv, v: string): Result<number> => 
-    // Complete
+     makeOk(unbox(env.addresses)[indexOf(v, unbox(env.vars))])
 
-export const globalEnvAddBinding = (v: string, addr: number): void =>
-    // Complete
+export const globalEnvAddBinding = (v: string, addr: number): void =>{
+    setBox(theGlobalEnv.vars, append(v, unbox(theGlobalEnv.vars)))
+    setBox(theGlobalEnv.addresses, append(addr, unbox(theGlobalEnv.addresses)))
+}
 
 const applyExtEnv = (env: ExtEnv, v: string): Result<number> =>
     env.vars.includes(v) ? makeOk(env.addresses[env.vars.indexOf(v)]) :
