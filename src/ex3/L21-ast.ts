@@ -307,6 +307,10 @@ const unparseBindings = (bdgs: Binding[]): string =>
 const unparseLetExp = (le: LetExp) : string => 
     `(let (${unparseBindings(le.bindings)}) ${unparseLExps(le.body)})`
 
+
+const unparseSetExp = (le: SetExp) : string => 
+"TODO: Implement"
+
 export const unparse = (exp: Parsed): string =>
     isBoolExp(exp) ? valueToString(exp.val) :
     isNumExp(exp) ? valueToString(exp.val) :
@@ -319,6 +323,6 @@ export const unparse = (exp: Parsed): string =>
     isPrimOp(exp) ? exp.op :
     isLetExp(exp) ? unparseLetExp(exp) :
     isDefineExp(exp) ? `(define ${exp.var.var} ${unparse(exp.val)})` :
-    isSetExp(exp) ?  "To be assigned"      :
+    isSetExp(exp) ?  unparseSetExp(exp)      :
     isProgram(exp) ? `(L21 ${unparseLExps(exp.exps)})` :
     exp;
