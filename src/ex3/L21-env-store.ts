@@ -76,7 +76,10 @@ export const applyEnv = (env: Env, v: string): Result<number> =>
     applyExtEnv(env, v);
 
 const applyGlobalEnv = (env: GlobalEnv, v: string): Result<number> => 
-     makeOk(unbox(env.addresses)[indexOf(v, unbox(env.vars))])
+indexOf(v, unbox(env.vars)) > -1 ?
+makeOk(unbox(env.addresses)[indexOf(v, unbox(env.vars))]):
+makeFailure("Reference not found")
+
 
 export const globalEnvAddBinding = (v: string, addr: number): void =>{
     setBox(theGlobalEnv.vars, append(v, unbox(theGlobalEnv.vars)))
