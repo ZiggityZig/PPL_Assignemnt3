@@ -2,7 +2,7 @@
 // L2 with mutation (set!) and env-box model
 // Direct evaluation of letrec with mutation, define supports mutual recursion.
 
-import { map, reduce, repeat, zipWith } from "ramda";
+import { append, map, reduce, repeat, zipWith } from "ramda";
 import { isBoolExp, isCExp, isLitExp, isNumExp, isPrimOp, isStrExp, isVarRef,
          isAppExp, isDefineExp, isIfExp, isLetExp, isProcExp, Binding, VarDecl, CExp, Exp, IfExp, LetExp, ProcExp, Program,
          parseL21Exp, DefineExp} from "./L21-ast";
@@ -22,7 +22,7 @@ const applicativeEval = (exp: CExp, env: Env): Result<Value> =>
     isBoolExp(exp) ? makeOk(exp.val) :
     isStrExp(exp) ? makeOk(exp.val) :
     isPrimOp(exp) ? makeOk(exp) :
-    isVarRef(exp) ? makeOk(bind(applyEnv(env, exp.var), (num: number) => applyStore(theStore, num))) 
+    isVarRef(exp) ? makeOk(bind(applyEnv(env, exp.var), (num: number) => applyStore(theStore, num)))
     isLitExp(exp) ? makeOk(exp.val as Value) :
     isIfExp(exp) ? evalIf(exp, env) :
     isProcExp(exp) ? evalProc(exp, env) :
@@ -48,9 +48,14 @@ const applyProcedure = (proc: Value, args: Value[]): Result<Value> =>
     isClosure(proc) ? applyClosure(proc, args) :
     makeFailure(`Bad procedure ${JSON.stringify(proc)}`);
 
-const applyClosure = (proc: Closure, args: Value[]): Result<Value> => {
+const applyClosure = (proc: Closure, args: Value[]): Result<Value> => {  
+    let TempAddresses: number[] = [];
     const vars = map((v: VarDecl) => v.var, proc.params);
-    const addresses: number[] = ...
+    map((a: Value) =>{
+        extendStore(theStore, a);
+        TempAddresses = append((unbox(theStore.vals).length - 1), TempAddresses);
+    },args )
+    const addresses: number[] = TempAddresses;
     const newEnv: ExtEnv = makeExtEnv(vars, addresses, proc.env)
     return evalSequence(proc.body, newEnv);
 }
