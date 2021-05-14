@@ -308,9 +308,6 @@ const unparseLetExp = (le: LetExp) : string =>
     `(let (${unparseBindings(le.bindings)}) ${unparseLExps(le.body)})`
 
 
-const unparseSetExp = (le: SetExp) : string => 
-"TODO: Implement"
-
 export const unparse = (exp: Parsed): string =>
     isBoolExp(exp) ? valueToString(exp.val) :
     isNumExp(exp) ? valueToString(exp.val) :
@@ -323,6 +320,6 @@ export const unparse = (exp: Parsed): string =>
     isPrimOp(exp) ? exp.op :
     isLetExp(exp) ? unparseLetExp(exp) :
     isDefineExp(exp) ? `(define ${exp.var.var} ${unparse(exp.val)})` :
-    isSetExp(exp) ?  unparseSetExp(exp)      :
+    isSetExp(exp) ?  `(set! ${exp.var.var} ${unparse(exp.newVal)})`     :
     isProgram(exp) ? `(L21 ${unparseLExps(exp.exps)})` :
     exp;
