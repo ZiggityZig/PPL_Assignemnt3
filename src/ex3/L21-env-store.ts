@@ -32,8 +32,10 @@ export const applyStore = (store: Store, address: number): Result<Value> =>
     makeOk(unbox(unbox(store.vals)[address]))
 
     
-export const setStore = (store: Store, address: number, val: Value): void => 
+export const setStore = (store: Store, address: number, val: Value): void => {
     setBox(unbox(store.vals)[address], val)
+}
+    
     
 
 

@@ -5,8 +5,8 @@
 import { append, map, reduce, repeat, zipWith } from "ramda";
 import { isBoolExp, isCExp, isLitExp, isNumExp, isPrimOp, isStrExp, isVarRef,
          isAppExp, isDefineExp, isIfExp, isLetExp, isProcExp, Binding, VarDecl, CExp, Exp, IfExp, LetExp, ProcExp, Program,
-         parseL21Exp, DefineExp} from "./L21-ast";
-import { applyEnv, makeExtEnv, Env, Store, setStore, extendStore, ExtEnv, applyEnvStore, theGlobalEnv, globalEnvAddBinding, theStore, isGlobalEnv, applyStore } from "./L21-env-store";
+         parseL21Exp, DefineExp, isSetExp, SetExp, VarRef} from "./L21-ast";
+import { applyEnv, makeExtEnv, Env, Store, setStore, extendStore, ExtEnv, theGlobalEnv, globalEnvAddBinding, theStore, isGlobalEnv, applyStore } from "./L21-env-store";
 import { isClosure, makeClosure, Closure, Value } from "./L21-value-store";
 import { applyPrimitive } from "./evalPrimitive-store";
 import { first, rest, isEmpty } from "../shared/list";
@@ -22,21 +22,29 @@ const applicativeEval = (exp: CExp, env: Env): Result<Value> =>
     isBoolExp(exp) ? makeOk(exp.val) :
     isStrExp(exp) ? makeOk(exp.val) :
     isPrimOp(exp) ? makeOk(exp) :
-    isVarRef(exp) ? makeOk(bind(applyEnv(env, exp.var), (num: number) => applyStore(theStore, num)))
+    isVarRef(exp) ? evalVarRef(exp, env):
     isLitExp(exp) ? makeOk(exp.val as Value) :
     isIfExp(exp) ? evalIf(exp, env) :
     isProcExp(exp) ? evalProc(exp, env) :
     isLetExp(exp) ? evalLet(exp, env) :
+    isSetExp(exp) ? evalSet(exp, env):
     isAppExp(exp) ? safe2((proc: Value, args: Value[]) => applyProcedure(proc, args))
-                        (applicativeEval(exp.rator, env), mapResult((rand: CExp) => applicativeEval(rand, env), exp.rands)) :
+                        (applicativeEval(exp.rator, env), mapResult((rand: CExp) => applicativeEval(rand, env), exp.rands)):
     exp;
-
+  
 export const isTrueValue = (x: Value): boolean =>
     ! (x === false);
 
 const evalIf = (exp: IfExp, env: Env): Result<Value> =>
     bind(applicativeEval(exp.test, env),
          (test: Value) => isTrueValue(test) ? applicativeEval(exp.then, env) : applicativeEval(exp.alt, env));
+
+const evalVarRef = (exp: VarRef, env: Env): Result<Value> =>
+    bind(applyEnv(env, exp.var), (num: number) => applyStore(theStore, num));
+
+const evalSet = (exp: SetExp, env: Env): Result<Value> =>
+    safe2((newVal: Value, address: number) => makeOk(setStore(theStore, address, newVal)))
+    (applicativeEval(exp.newVal, env), applyEnv(env, exp.var.var))
 
 const evalProc = (exp: ProcExp, env: Env): Result<Closure> =>
     makeOk(makeClosure(exp.args, exp.body, env));
@@ -54,7 +62,7 @@ const applyClosure = (proc: Closure, args: Value[]): Result<Value> => {
     map((a: Value) =>{
         extendStore(theStore, a);
         TempAddresses = append((unbox(theStore.vals).length - 1), TempAddresses);
-    },args )
+    }, args)
     const addresses: number[] = TempAddresses;
     const newEnv: ExtEnv = makeExtEnv(vars, addresses, proc.env)
     return evalSequence(proc.body, newEnv);
@@ -80,8 +88,6 @@ const evalDefineExps = (def: DefineExp, exps: Exp[]): Result<Value> =>
     }) :
     makeFailure("Unexpected " + def);
 
-const 
-
 // Main program
 // L2-BOX @@ Use GE instead of empty-env
 export const evalProgram = (program: Program): Result<Value> =>
@@ -96,7 +102,12 @@ const evalLet = (exp: LetExp, env: Env): Result<Value> => {
     const vals = mapResult((v: CExp) => applicativeEval(v, env), map((b: Binding) => b.val, exp.bindings));
     const vars = map((b: Binding) => b.var.var, exp.bindings);
     return bind(vals, (vals: Value[]) => {
-        const addresses = ...
+        let TempAddresses: number[] = [];
+        map((val: Value) => { 
+        extendStore(theStore, val);
+        TempAddresses = append((unbox(theStore.vals).length - 1), TempAddresses)
+        }, vals)
+        const addresses = TempAddresses
         const newEnv = makeExtEnv(vars, addresses, env)
         return evalSequence(exp.body, newEnv);
     })
