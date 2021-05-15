@@ -247,6 +247,7 @@ const parseBindings = (bindings: Sexp): Result<Binding[]> => {
 const parseLetExp = (bindings: Sexp, body: Sexp[]): Result<LetExp> =>
     safe2((bindings: Binding[], body: CExp[]) => makeOk(makeLetExp(bindings, body)))
         (parseBindings(bindings), mapResult(parseL21CExp, body));
+        
         const parseSetExp = (params: Sexp[]): Result<SetExp> =>
         isEmpty(params) ? makeFailure("set! missing 2 arguments") :
         isEmpty(rest(params)) ? makeFailure("set! missing 1 argument") :

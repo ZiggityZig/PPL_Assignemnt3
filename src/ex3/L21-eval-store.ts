@@ -42,10 +42,10 @@ const evalIf = (exp: IfExp, env: Env): Result<Value> =>
 const evalVarRef = (exp: VarRef, env: Env): Result<Value> =>
     bind(applyEnv(env, exp.var), (num: number) => applyStore(theStore, num));
 
-const evalSet = (exp: SetExp, env: Env): Result<Value> =>
-    safe2((newVal: Value, address: number) => makeOk(setStore(theStore, address, newVal)))
-    (applicativeEval(exp.newVal, env), applyEnv(env, exp.var.var))
-
+const evalSet = (exp: SetExp, env: Env): Result<Value> =>{
+    return safe2((newVal: Value, address: number) => makeOk(setStore(theStore, address, newVal)))
+    (applicativeEval(exp.newVal, env), applyEnv(env, exp.var.var));
+}
 const evalProc = (exp: ProcExp, env: Env): Result<Closure> =>
     makeOk(makeClosure(exp.args, exp.body, env));
 
